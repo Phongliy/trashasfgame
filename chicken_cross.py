@@ -14,6 +14,7 @@ LANE_COUNT = 6
 LANE_WIDTH = WIDTH // (LANE_COUNT)  # Adjusted for sidewalk + 5 lanes
 TIME_LIMIT = 60  # 1 minute in seconds
 other_lane = 1
+all_Lane=34
 voice_files = ["una.mp3", "yaha.mp3"]  # Add more voice files as needed
 
 # Colors
@@ -22,6 +23,7 @@ YELLOW = (255, 255, 0)
 RED = (255, 0, 0)
 move_speed = 15  # Speed of movement
 passed = 0
+check = 0
 
 # Set up the display
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -30,7 +32,7 @@ clock = pygame.time.Clock()
 
 # Load images
 street_img = pygame.image.load("street.png").convert()
-street_img = pygame.transform.scale(street_img, (WIDTH, HEIGHT))  # Match total street width
+street_img = pygame.transform.scale(street_img, (WIDTH * 5.8, HEIGHT))  # Match total street width
 down = pygame.image.load("down.png").convert()
 down = pygame.transform.scale(down, (LANE_WIDTH, HEIGHT))  # Match total street width
 usagi = pygame.image.load("maincharacter.png").convert_alpha()  # Use convert_alpha for transparency
@@ -45,6 +47,8 @@ chicken_x = WIDTH // 2  # Start on sidewalk
 chicken_y = HEIGHT
 target_x = chicken_x  # Target position for smooth movement
 current_lane = 0  # 0 = sidewalk, 1-5 = street lanes
+lane_x = 0
+targetlane_x = 0
 
 # Car
 car_x = WIDTH
@@ -61,10 +65,7 @@ game_over = False
 
 # Obstacles
 obstacles = [
-    {"x": 0, "y": HEIGHT - 150, "lane": 1, "speed_y": 0},  # One obstacle per lane
-    {"x": 0, "y": HEIGHT - 150, "lane": 2, "speed_y": 0},
-    {"x": 0, "y": HEIGHT - 150, "lane": 3, "speed_y": 0},
-    {"x": 0, "y": HEIGHT - 150, "lane": 4, "speed_y": 0}
+    {"x": lane * LANE_WIDTH + LANE_WIDTH // 2 - 50, "y": HEIGHT - 150, "lane": lane, "speed_y": 0} for lane in range(1, 34)
 ]
 
 def play_random_voices():
@@ -80,10 +81,11 @@ def generate_question():
     return f"{a} + {b} = ?", a + b
 
 def setup():
-    global chicken_x, chicken_y, current_lane, car_x, car_y, math_question, math_answer, user_input, score, time_left, game_over, target_x, passed
+    global chicken_x, chicken_y, current_lane, car_x, car_y, math_question, math_answer, user_input, score, time_left, game_over, target_x, passed, lane_x, targetlane_x, check
     chicken_x = LANE_WIDTH // 2
     chicken_y = HEIGHT // 2
     passed = 0
+    lane_x = 0
     current_lane = 0  # Start on sidewalk
     car_x = WIDTH
     car_y = HEIGHT - 150
@@ -95,13 +97,12 @@ def setup():
     target_x = chicken_x  # Reset target position
     # Randomize obstacle positions and speeds
     for obs in obstacles:
-        obs["lane"] = obs["lane"]  # Fixed to one obstacle per lane
         obs["x"] = obs["lane"] * LANE_WIDTH + LANE_WIDTH // 2 - 50  # Center in lane
         obs["y"] = HEIGHT - 150
         obs["speed_y"] = random.uniform(-4, 4)  # Increased speed range
 
 def update_loop():
-    global chicken_x, chicken_y, current_lane, car_x, car_y, math_question, math_answer, user_input, score, time_left, game_over, other_lane, target_x, passed
+    global chicken_x, chicken_y, current_lane, car_x, car_y, math_question, math_answer, user_input, score, time_left, game_over, other_lane, target_x, passed, lane_x, targetlane_x, check,tickk
 
     if game_over:
         for event in pygame.event.get():
@@ -122,24 +123,27 @@ def update_loop():
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_UP:
                 if user_input.isdigit() and int(user_input) == math_answer:
-                    if other_lane == 1:
-                        target_x += LANE_WIDTH
-                    else:
+                    if passed >= 2:
                         target_x -= LANE_WIDTH
+                        check = 1
+                    else:
+                        target_x += LANE_WIDTH
                     play_random_voices()  # Play random voices after correct answer
                     current_lane += 1
                     score += 10
                     passed += 1
+                    if passed >= 3:
+                        targetlane_x -= LANE_WIDTH
                     math_question, math_answer = generate_question()
                     user_input = ""
                     # Reset obstacles when passing a lane
                     for obs in obstacles:
                         if other_lane == 1:
-                            if obs["lane"] == current_lane - 1:  # Reset obstacle for the lane just passed
+                            if obs["lane"] == passed - 1:  # Reset obstacle for the lane just passed
                                 obs["y"] = HEIGHT - 150
                                 obs["speed_y"] = random.uniform(-4, 4)  # Randomize direction and speed
                         else:
-                            if obs["lane"] == 5 - current_lane + 1:  # Reset obstacle for the lane just passed
+                            if obs["lane"] == 5 - passed + 1:  # Reset obstacle for the lane just passed
                                 obs["y"] = HEIGHT - 150
                                 obs["speed_y"] = random.uniform(-4, 4)  # Randomize direction and speed
                 else:
@@ -150,6 +154,9 @@ def update_loop():
                 user_input = user_input[:-1]
     if abs(chicken_x - target_x) > move_speed:
         chicken_x += move_speed if chicken_x < target_x else -move_speed
+        if passed >= 3 and abs(chicken_x - target_x) <= 20 and check == 1:
+            target_x += LANE_WIDTH
+            check = 0
     # Update time
     time_left -= 1 / FPS
     if time_left <= 0:
@@ -166,28 +173,27 @@ def update_loop():
         if obs["y"] < 100 or obs["y"] > HEIGHT - 150:  # Keep within screen bounds
             obs["speed_y"] *= -1  # Reverse direction when hitting bounds
 
+    # Cycle obstacle from lane 1 to lane 5 with repositioning behind map
+    tickk=0
+    for obs in obstacles[:]:  # Use a copy to modify list during iteration
+        if(passed>=3 and tickk<=passed-3):
+            tickk+=1
+            continue
+        if obs["lane"] == 1 and (obs["x"] + lane_x < -100):  # Check if out of screen left
+            obs["lane"] = 5  # Move to lane 5
+            obs["x"] = 4 * LANE_WIDTH + LANE_WIDTH // 2 - 50 + WIDTH * 5  # Reposition behind map (far right)
+            obs["y"] = HEIGHT - 150  # Reset y position
+            obs["speed_y"] = random.uniform(-4, 4)  # Randomize speed
+
+    if abs(lane_x - targetlane_x) > move_speed:
+        lane_x += move_speed if lane_x < targetlane_x else -move_speed
+
     # Draw
     # Background
-    if current_lane == 5:
-        other_lane *= -1
-        current_lane = 0
-    if passed <= 2:
-        screen.blit(street_img, (0, 0))
-        for i in range(1, 6):
-            screen.blit(down, (LANE_WIDTH * i + 5, 0))
-    elif passed == 3:
-        offset_x = LANE_WIDTH  # Starting offset for lanes
-        if (offset_x * 1 + 5) > 0:  # Continue moving until lane 1 (i=1) reaches x=0
-            offset_x -= move_speed  # Move left smoothly
-        for i in range(1, 6):
-            screen.blit(down, (offset_x * i + 5, 0))
+    screen.blit(street_img, (lane_x, 0))
 
     # Draw lanes
     screen.blit(usagi, (chicken_x - 75, chicken_y - 90))  # Chicken (adjusted for center)
-    if other_lane == 1:
-        screen.blit(star, (WIDTH - LANE_WIDTH, HEIGHT // 2 - 50))
-    else:
-        screen.blit(star, (LANE_WIDTH // 2 - 50, HEIGHT // 2 - 50))
     font = pygame.font.Font(None, 36)
     question_text = font.render(math_question, True, WHITE)
     input_text = font.render(user_input, True, WHITE)
@@ -198,12 +204,16 @@ def update_loop():
 
     # Draw obstacles
     for obs in obstacles:
+        if(passed>=3 and tickk<=3-passed):
+            tickk+=1
+            continue
+        draw_x = obs["x"] + lane_x  # Adjust x position with lane_x for drawing
         if other_lane == 1:
             if obs["lane"] != current_lane:  # Do not draw obstacle in current lane
-                screen.blit(obstacle_img, (obs["x"], obs["y"]))
+                screen.blit(obstacle_img, (draw_x, obs["y"]))
         else:
             if obs["lane"] != 5 - current_lane:  # Do not draw obstacle in current lane
-                screen.blit(obstacle_img, (obs["x"], obs["y"]))
+                screen.blit(obstacle_img, (draw_x, obs["y"]))
 
     pygame.display.flip()
     return True
