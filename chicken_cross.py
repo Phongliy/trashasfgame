@@ -2,6 +2,7 @@ import asyncio
 import platform
 import pygame
 import random
+import question  # Assuming question.py is in the same directory
 
 # Initialize Pygame
 pygame.init()
@@ -68,6 +69,9 @@ obstacles = [
     {"x": lane * LANE_WIDTH + LANE_WIDTH // 2 - 50, "y": HEIGHT - 150, "lane": lane, "speed_y": 0} for lane in range(1, 34)
 ]
 
+q_asked = []
+question_gen = question.question_generator()
+
 def play_random_voices():
     if voice_files:  # Ensure there are voice files
         selected_voices = random.sample(voice_files, min(1, len(voice_files)))  # Pick 2 random voices
@@ -76,9 +80,26 @@ def play_random_voices():
             sound.play()
 
 def generate_question():
-    a = random.randint(1, 1)
-    b = random.randint(1, 1)
-    return f"{a} + {b} = ?", a + b
+    # a = random.randint(1, 1)
+    # b = random.randint(1, 1)
+    # return f"{a} + {b} = ?", a + b
+
+    q_key, is_correct = question.main()
+    # while q_key in q_asked:
+    #      q_key, is_correct = question.main()
+    q_asked.append(q_key)
+    # # Check if the answer is correct
+    return q_key, is_correct
+    # try:
+    #     key, answer = next(question_gen)
+    #     q_asked.append(key)
+    #     return key, answer
+    # except StopIteration:
+    #     print("No more questions!")
+    #     return None, None, None, None
+
+    
+    
 
 def setup():
     global chicken_x, chicken_y, current_lane, car_x, car_y, math_question, math_answer, user_input, score, time_left, game_over, target_x, passed, lane_x, targetlane_x, check
@@ -89,7 +110,7 @@ def setup():
     current_lane = 0  # Start on sidewalk
     car_x = WIDTH
     car_y = HEIGHT - 150
-    math_question, math_answer = generate_question()
+    # math_question, math_answer = generate_question()
     user_input = ""
     score = 0
     time_left = TIME_LIMIT
@@ -122,7 +143,9 @@ def update_loop():
             return False
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_UP:
-                if user_input.isdigit() and int(user_input) == math_answer:
+                key, is_correct = generate_question()
+                print(q_asked)
+                if is_correct:
                     if passed >= 2:
                         target_x -= LANE_WIDTH
                         check = 1
@@ -134,8 +157,9 @@ def update_loop():
                     passed += 1
                     if passed >= 3:
                         targetlane_x -= LANE_WIDTH
-                    math_question, math_answer = generate_question()
-                    user_input = ""
+                    # math_question, math_answer = generate_question()
+                    # user_input = ""
+                    
                     # Reset obstacles when passing a lane
                     for obs in obstacles:
                         if other_lane == 1:
@@ -195,11 +219,11 @@ def update_loop():
     # Draw lanes
     screen.blit(usagi, (chicken_x - 75, chicken_y - 90))  # Chicken (adjusted for center)
     font = pygame.font.Font(None, 36)
-    question_text = font.render(math_question, True, WHITE)
-    input_text = font.render(user_input, True, WHITE)
+    # question_text = font.render(math_question, True, WHITE)
+    # input_text = font.render(user_input, True, WHITE)
     time_text = font.render(f"Time: {int(time_left)}s", True, WHITE)
-    screen.blit(question_text, (10, 10))
-    screen.blit(input_text, (10, 50))
+    # screen.blit(question_text, (10, 10))
+    # screen.blit(input_text, (10, 50))
     screen.blit(time_text, (WIDTH - 150, 10))
 
     # Draw obstacles
