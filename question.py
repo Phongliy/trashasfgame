@@ -26,16 +26,29 @@ tick_font = pygame.font.Font("DejaVuSans.ttf", 40)
 
 # Question and answer setup
 questions = {
-    0 : ("Cây nào sống ở vùng ngập mặn?", ["CÂY CẶC BẦN(bần chua)", "Cây Xoài", "Cây Dừa", "Cây mít"], "CÂY CẶC BẦN(bần chua)"),
-    1 : ("Con gì đi bằng 3 chân?", ["Người ngoài hành tinh", "Chó cụt chân", "Gà công nghiệp", "Cụ già với gậy"], "Cụ già với gậy"),
-    2 : ("Thức ăn nào làm bạn khóc?", ["Không có gì ăn", "ớt", "Khoai tây", "Cơm khổ khoa"], "Không có gì ăn"),
-    3 : ("Cha của bé sol là ai", ["Trình Trần Phường Tuần", "Hiếu thứ hai", "j69", "Trịnh Trần Phương Tuấn"], "Trịnh Trần Phương Tuấn"),
-    4 : ("Tại sao con gà lai qua đường?", ["Vì nó thích", "Để qua phía bên kia", "Ước mở thuở nhỏ", "Để mưu sinh"], "Để qua phía bên kia"),
-    5 : ("LGBT là viết tắt của gì?", ["Lesbian Gay Bisexual Transgender", "Lấy Gió Bằng Turbo", "Lẩu Gà Bình Thuận", "Lắm Gái Bán Tình"], "Lesbian Gay Bisexual Transgender"),
-    6 : ("Game nào hay nhất Roblox?", ["Blox fruit", "Grow a garden", "Liên Blox Mobile", "Free fire"], "Blox fruit"),
-    7 : ("Trong Liên Quân vị tướng nào thấp nhất?", ["Aya", "Zip", "Nakroth", "Florentino"], "Zip"),
-    8 : ("Cái gì người nghèo có mà người giàu không có?", ["Tiền", "Hạnh Phúc", "Không Có Gì", "Gia Đình"], "Không Có Gì"),
-    9 : ("Sắp xếp các từ sau theo đúng thứ tự c/l/ọ/n/ồ", ["lộn cò", "cộn lò", "cọn lồ", "lọ cồn"], "lọ cồn")
+    0: ("Cây nào sống ở vùng ngập mặn?", ["CÂY CẶC BẦN(bần chua)", "Cây Xoài", "Cây Dừa", "Cây mít"], "CÂY CẶC BẦN(bần chua)"),
+    1: ("Con gì đi bằng 3 chân?", ["Con Mẹm", "Chó cụt chân", "Gà công nghiệp", "Cụ già với gậy"], "Cụ già với gậy"),
+    2: ("Thức ăn nào làm bạn khóc?", ["Không có gì ăn", "ớt", "Khoai tây", "Cơm khổ khoa"], "Không có gì ăn"),
+    3: ("Cha của bé sol là ai", ["Trình Trần Phường Tuần", "Hiếu thứ hai", "j69", "Trịnh Trần Phương Tuấn"], "Trịnh Trần Phương Tuấn"),
+    4: ("Tại sao con gà lai qua đường?", ["Vì nó thích", "Để qua phía bên kia", "Ước mở thuở nhỏ", "Để mưu sinh"], "Để qua phía bên kia"),
+    5: ("LGBT là viết tắt của gì?", ["Lesbian Gay Bisexual Transgender", "Lấy Gió Bằng Turbo", "Lẩu Gà Bình Thuận", "Lắm Gái Bán Tình"], "Lesbian Gay Bisexual Transgender"),
+    6: ("Game nào hay nhất Roblox?", ["Blox fruit", "Grow a garden", "Liên Blox Mobile", "Free fire"], "Blox fruit"),
+    7: ("Trong Liên Quân vị tướng nào thấp nhất?", ["Aya", "Zip", "Nakroth", "Florentino"], "Zip"),
+    8: ("Cái gì người nghèo có mà người giàu không có?", ["Tiền", "Hạnh Phúc", "Không Có Gì", "Gia Đình"], "Không Có Gì"),
+    9: ("Sắp xếp các từ sau theo đúng thứ tự c/l/ọ/n/ồ", ["lộn cò", "cộn lò", "cọn lồ", "lọ cồn"], "lọ cồn"),
+    10: ("74 giây là bao nhiêu phút", ["gần 1 phút 30s", "1.2756666p", "1.23333p", "2p"], "1.23333p"),
+    11: ("Biển số nào sau đây là biển của TPHCM", ["55", "1234", "69", "555"], "55"),
+    12: ("Số nguyên tố lớn nhất sau 1000 là?", ["987", "993", "997", "999"], "997"),
+    13: ("Ai là người liêm nhất trong số những người sau đây", ["Hiếu Thứ Hai", "Sơn Tùng MTP", "J97", "MCK"], "J97"),
+    14: ("Ai là người đầu tiên đặt chân lên mặt trăng", ["Chú Cuội", "Chị Hằng", "Neil Armstrong", "Lowg"], "Neil Armstrong"),
+    15: ("Số nào khiến học sinh sợ nhất?", ["1", "5", "10", "0"], "0"),
+    16: ("Loại Tiền nào có giá trị thấp nhất", ["Dollar", "Euro", "Tiền Án", "Tiền Sự"], "Tiền Án"),
+    17: ("Trong những loại người dưới đây ai chạy nhanh nhất?", ["Người chết", "Người khuyết tật", "Người gay", "Người âm"], "Người gay"),
+    18: ("Loài nào dưới đây không phải là bò sát?", ["Cá sấu", "Rùa", "Thằn lằn", "Ếch"], "Ếch"),
+    19: ("Sinh vật nào dưới đây KHÔNG thuộc nhóm động vật có xương sống?", ["Cá voi", "Hải sâm", "Cá ngựa", "Rắn biển"], "Hải sâm"),
+    20: ("Nhiệt độ nào dưới đây là nhiệt độ đông đặc của nước?", ["0°C", "100°C", "-10°C", "4°C"], "0°C"),
+    21: ("Nhiệt độ nào sau đây là nhiệt độ nóng chảy của nước đá?", ["0°C", "100°C", "-5°C", "10°C"], "0°C"),
+    22: ("Ai nắm giữ kỉ luật nín thở lâu nhất?", ["Ma da", "Fish", "Budimir", "cá voi mõm khoằm Cuvier"], "Budimir")
 }
 
 # Global variables for question state
@@ -86,10 +99,7 @@ def main():
 
         # Draw question
         if current_question < len(questions):
-            question_index = current_question + 1
-            total_questions = len(questions)
-            number_text = font.render(f"Question {question_index}/{total_questions}", True, BLACK)
-            screen.blit(number_text, (WIDTH // 2 - number_text.get_width() // 2, 50))
+
 
             q_key = question_keys[current_question]
             question_text = questions[q_key][0]
