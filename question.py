@@ -36,7 +36,7 @@ questions = {
     7: ("Trong Liên Quân vị tướng nào thấp nhất?", ["Aya", "Zip", "Nakroth", "Florentino"], "Zip"),
     8: ("Cái gì người nghèo có mà người giàu không có?", ["Tiền", "Hạnh Phúc", "Không Có Gì", "Gia Đình"], "Không Có Gì"),
     9: ("Sắp xếp các từ sau theo đúng thứ tự c/l/ọ/n/ồ", ["lộn cò", "cộn lò", "cọn lồ", "lọ cồn"], "lọ cồn"),
-    10: ("74 giấy là bao nhiêu phút", ["gần 1 phút 30s", "1.2756666p", "1.23333p", "2p"], "1.23333p"),
+    10: ("74 giây là bao nhiêu phút", ["gần 1 phút 30s", "1.2756666p", "1.23333p", "2p"], "1.23333p"),
     11: ("Biển số nào sau đây là biển của TPHCM", ["55", "1234", "69", "555"], "55"),
     12: ("Số nguyên tố lớn nhất sau 1000 là?", ["987", "993", "997", "999"], "997"),
     13: ("Ai là người liêm nhất trong số những người sau đây", ["Hiếu Thứ Hai", "Sơn Tùng MTP", "J97", "MCK"], "J97"),
