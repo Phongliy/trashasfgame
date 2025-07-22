@@ -21,7 +21,6 @@ voice_files = ["una.mp3", "yaha.mp3"]  # Add more voice files as needed
 # Colors
 WHITE = (255, 255, 255)
 YELLOW = (255, 255, 0)
-WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 move_speed = 15  # Speed of movement
@@ -42,8 +41,18 @@ usagi = pygame.image.load("maincharacter.png").convert_alpha()  # Use convert_al
 usagi = pygame.transform.scale(usagi, (200, 180))
 star = pygame.image.load("star.png").convert_alpha()  # Use convert_alpha for transparency
 star = pygame.transform.scale(star, (200, 180))
-obstacle_img = pygame.image.load("momonga.png").convert_alpha()  # Placeholder for obstacle image
-obstacle_img = pygame.transform.scale(obstacle_img, (100, 100))  # Adjust size as needed
+# Randomize obstacle image from 3 options (placeholders)
+obstacle_images = [
+    pygame.image.load("car1.png").convert_alpha(),  # Placeholder link 1
+    pygame.image.load("car2.png").convert_alpha(),  # Placeholder link 2
+    pygame.image.load("car3.png").convert_alpha()   # Placeholder link 3
+]
+for img in obstacle_images:
+    img = pygame.transform.scale(img, (50, 50))  # Adjust size as needed
+
+# Item image (placeholder)
+item_img = pygame.image.load("item.png").convert_alpha()  # Replace with your item image
+item_img = pygame.transform.scale(item_img, (100, 100))  # Set size to 100x100
 
 # Load custom font
 try:
@@ -77,21 +86,25 @@ user_input = ""
 time_left = TIME_LIMIT
 game_over = False
 paused = False
+multiplier = 1.1  # Initial multiplier for score calculation
 
 # Obstacles
 obstacles = [
-    {"x": lane * LANE_WIDTH + LANE_WIDTH // 2 - 50, "y": HEIGHT - 150, "lane": lane, "speed_y": 0} for lane in range(1, 34)
+    {"x": lane * LANE_WIDTH + LANE_WIDTH // 2 - 50, "y": HEIGHT - 150, "lane": lane, "speed_y": random.uniform(2, 6), "image_idx": random.randint(0, 2)} for lane in range(1, 34)
+]
+
+# Items (multiple, similar to obstacles, fixed y at HEIGHT // 2)
+items = [
+    {"x": lane * LANE_WIDTH + LANE_WIDTH // 2 - 70, "y": HEIGHT // 2, "lane": lane, "speed_y": 0} for lane in range(1, 34)
+]
+
+# Multipliers (similar to items, for display, fixed values per lane)
+multipliers = [
+    {"x": lane * LANE_WIDTH + LANE_WIDTH // 2 - 70, "y": HEIGHT // 2, "lane": lane, "speed_y": 0, "value": round(1.1 ** (lane - 1), 2)} for lane in range(1, 34)
 ]
 
 q_asked = []
-try:
-    question_gen = question.question_generator()
-except AttributeError:
-    print("Warning: question.py does not have question_generator(). Using dummy generator.")
-    def dummy_generator():
-        while True:
-            yield "No questions available", None
-    question_gen = dummy_generator()
+question_gen = question.question_generator()
 
 def play_random_voices():
     if voice_files:  # Ensure there are voice files
@@ -123,38 +136,44 @@ def generate_question():
     
 
 def setup():
-    global chicken_x, chicken_y, current_lane, car_x, car_y, math_question, math_answer, user_input, score, time_left, game_over, target_x, passed, lane_x, targetlane_x, check, paused
+    global chicken_x, chicken_y, current_lane, car_x, car_y, math_question, math_answer, user_input, score, time_left, game_over, target_x, passed, lane_x, targetlane_x, check, paused, obstacles, items, multipliers, multiplier
     chicken_x = LANE_WIDTH // 2
     chicken_y = HEIGHT // 2
     passed = 0
     lane_x = 0
-    targetlane_x=0
     current_lane = 0  # Start on sidewalk
+    target_x=0
+    targetlane_x = 0  # Reset target lane position
+    # Reset car position
     car_x = WIDTH
     car_y = HEIGHT - 150
     # math_question, math_answer = generate_question()
     user_input = ""
-    # Load score from file with error handling
-    try:
-        with open("score.txt", "r") as f:
-            content = f.read().strip()
-            score = float(content) if content else 0.0
-    except FileNotFoundError:
-        score = 0.0
-    except ValueError:
-        score = 0.0  # Default to 0 if conversion fails
+    score = 0
     time_left = TIME_LIMIT
     game_over = False
     paused = False
     target_x = chicken_x  # Reset target position
+    multiplier = 1.1  # Reset multiplier
     # Randomize obstacle positions and speeds
     for obs in obstacles:
-        obs["x"] = obs["lane"] * LANE_WIDTH + LANE_WIDTH // 2 - 50  # Center in lane
+        obs["x"] = obs["lane"] * LANE_WIDTH + LANE_WIDTH // 2 - 100  # Center in lane
         obs["y"] = HEIGHT - 150
-        obs["speed_y"] = random.uniform(-4, 4)  # Increased speed range
+        obs["speed_y"] = random.uniform(2, 6)  # Positive speed for upward movement
+        obs["image_idx"] = random.randint(0, 2)  # Randomize image index
+    # Initialize item positions and reset
+    for item in items:
+        item["x"] = item["lane"] * LANE_WIDTH + LANE_WIDTH // 2 - 70  # Center in lane
+        item["y"] = HEIGHT // 2  # Fixed y position
+        item["speed_y"] = 0  # No vertical movement
+    # Initialize multiplier positions and values (fixed per lane)
+    for m in multipliers:
+        m["x"] = m["lane"] * LANE_WIDTH + LANE_WIDTH // 2 - 70  # Center in lane
+        m["y"] = HEIGHT // 2  # Fixed y position
+        m["speed_y"] = 0  # No vertical movement
 
 def update_loop():
-    global chicken_x, chicken_y, current_lane, car_x, car_y, math_question, math_answer, user_input, score, time_left, game_over, other_lane, target_x, passed, lane_x, targetlane_x, check, tickk, paused
+    global chicken_x, chicken_y, current_lane, car_x, car_y, math_question, math_answer, user_input, score, time_left, game_over, other_lane, target_x, passed, lane_x, targetlane_x, check, tickk, paused, obstacles, items, multipliers, multiplier
 
     if game_over or paused:
         for event in pygame.event.get():
@@ -201,18 +220,18 @@ def update_loop():
                 print(q_asked)
                 if is_correct:
                     if passed >= 2:
-                        target_x -= LANE_WIDTH
+                        target_x -= (LANE_WIDTH)
                         check = 1
                     else:
-                        target_x += LANE_WIDTH
+                        target_x += (LANE_WIDTH-20)
                     play_random_voices()  # Play random voices after correct answer
                     current_lane += 1
-                    score = score * 1.1  # Multiply score by 1.1 when passing a lane
-                    with open("score.txt", "w") as f:
-                        f.write(str(score))  # Save updated score to file
+                    score += 10 * multiplier  # Apply multiplier to score
                     passed += 1
                     if passed >= 3:
                         targetlane_x -= LANE_WIDTH
+                    # Update multiplier based on current lane
+                    multiplier = round(1.1 ** (current_lane), 2)  # Update multiplier dynamically
                     # math_question, math_answer = generate_question()
                     # user_input = ""
                     
@@ -221,15 +240,15 @@ def update_loop():
                         if other_lane == 1:
                             if obs["lane"] == passed - 1:  # Reset obstacle for the lane just passed
                                 obs["y"] = HEIGHT - 150
-                                obs["speed_y"] = random.uniform(-4, 4)  # Randomize direction and speed
+                                obs["speed_y"] = random.uniform(2, 6)
+                                obs["image_idx"] = random.randint(0, 2)
                         else:
                             if obs["lane"] == 5 - passed + 1:  # Reset obstacle for the lane just passed
                                 obs["y"] = HEIGHT - 150
-                                obs["speed_y"] = random.uniform(-4, 4)  # Randomize direction and speed
+                                obs["speed_y"] = random.uniform(2, 6)
+                                obs["image_idx"] = random.randint(0, 2)
                 else:
                     game_over = True
-                    with open("score.txt", "w") as f:
-                        f.write('0')  # Save updated score to file
             elif event.key in (pygame.K_0, pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4, pygame.K_5, pygame.K_6, pygame.K_7, pygame.K_8, pygame.K_9):
                 user_input += event.unicode
             elif event.key == pygame.K_BACKSPACE:
@@ -238,8 +257,6 @@ def update_loop():
             mouse_pos = pygame.mouse.get_pos()
             if WIDTH // 10 > mouse_pos[0] > 0 and HEIGHT // 20 > mouse_pos[1] > 0:  # Stop button area
                 paused = True
-                with open("score.txt", "w") as f:
-                    f.write(str(score))  # Save current score
 
     if abs(chicken_x - target_x) > move_speed:
         chicken_x += move_speed if chicken_x < target_x else -move_speed
@@ -256,11 +273,13 @@ def update_loop():
     if car_x < -50:
         car_x = WIDTH
 
-    # Move obstacles up and down
+    # Move obstacles upward
     for obs in obstacles:
-        obs["y"] += obs["speed_y"]
-        if obs["y"] < 100 or obs["y"] > HEIGHT - 150:  # Keep within screen bounds
-            obs["speed_y"] *= -1  # Reverse direction when hitting bounds
+        obs["y"] -= obs["speed_y"]  # Move upward (negative y direction)
+        if obs["y"] < -500:  # When obstacle moves off the top
+            obs["y"] = HEIGHT  # Reset to initial position (bottom)
+            obs["speed_y"] = random.uniform(2, 6)  # Randomize positive speed again
+            obs["image_idx"] = random.randint(0, 2)
 
     # Cycle obstacle from lane 1 to lane 5 with repositioning behind map
     tickk=0
@@ -271,8 +290,25 @@ def update_loop():
         if obs["lane"] == 1 and (obs["x"] + lane_x < -100):  # Check if out of screen left
             obs["lane"] = 5  # Move to lane 5
             obs["x"] = 4 * LANE_WIDTH + LANE_WIDTH // 2 - 50 + WIDTH * 5  # Reposition behind map (far right)
-            obs["y"] = HEIGHT - 150  # Reset y position
-            obs["speed_y"] = random.uniform(-4, 4)  # Randomize speed
+            obs["y"] = HEIGHT   # Reset y position
+            obs["speed_y"] = random.uniform(2, 6)  # Randomize speed
+            obs["image_idx"] = random.randint(0, 2)
+
+    # Move items (similar to obstacles, fixed y)
+    for item in items[:]:
+        if item["lane"] == 1 and (item["x"] + lane_x < -100):  # Check if out of screen left
+            item["lane"] = 5  # Move to lane 5
+            item["x"] = 4 * LANE_WIDTH + LANE_WIDTH // 2 - 70 + WIDTH * 5  # Reposition behind map (far right)
+            item["y"] = HEIGHT // 2  # Fixed y position
+            item["x"] += move_speed if lane_x < targetlane_x else -move_speed  # Move with lane
+
+    # Move multipliers (similar to items)
+    for m in multipliers[:]:
+        if m["lane"] == 1 and (m["x"] + lane_x < -100):  # Check if out of screen left
+            m["lane"] = 5  # Move to lane 5
+            m["x"] = 4 * LANE_WIDTH + LANE_WIDTH // 2 - 70 + WIDTH * 5  # Reposition behind map (far right)
+            m["y"] = HEIGHT // 2  # Fixed y position
+            m["x"] += move_speed if lane_x < targetlane_x else -move_speed  # Move with lane
 
     if abs(lane_x - targetlane_x) > move_speed:
         lane_x += move_speed if lane_x < targetlane_x else -move_speed
@@ -280,6 +316,31 @@ def update_loop():
     # Draw
     # Background
     screen.blit(street_img, (lane_x, 0))
+
+    # Draw items
+    for item in items:
+        draw_x = item["x"] + lane_x  # Adjust x position with lane_x for drawing
+        screen.blit(item_img, (draw_x, item["y"]))
+
+    # Draw multipliers
+    for m in multipliers:
+        draw_x = m["x"] + lane_x  # Adjust x position with lane_x for drawing
+        multiplier_text = font.render(f"x{round(m['value'], 2)}", True, BLACK)
+        text_rect = multiplier_text.get_rect(center=(draw_x + 50, m["y"] + 50))
+        screen.blit(multiplier_text, text_rect)
+
+    # Draw obstacles
+    for obs in obstacles:
+        if(passed>=3 and tickk<=3-passed):
+            tickk+=1
+            continue
+        draw_x = obs["x"] + lane_x  # Adjust x position with lane_x for drawing
+        if other_lane == 1:
+            if obs["lane"] != current_lane:  # Do not draw obstacle in current lane
+                screen.blit(obstacle_images[obs["image_idx"]], (draw_x, obs["y"]))
+        else:
+            if obs["lane"] != 5 - current_lane:  # Do not draw obstacle in current lane
+                screen.blit(obstacle_images[obs["image_idx"]], (draw_x, obs["y"]))
 
     # Draw lanes
     screen.blit(usagi, (chicken_x - 75, chicken_y - 90))  # Chicken (adjusted for center)
@@ -327,19 +388,6 @@ def update_loop():
         pygame.draw.rect(screen, BLACK, play_again_button_rect, 2)  # Black border
         play_again_text = stop_font.render("Play Again", True, BLACK)
         screen.blit(play_again_text, (WIDTH//2-WIDTH//20+25, HEIGHT // 2+115))
-
-    # Draw obstacles
-    for obs in obstacles:
-        if(passed>=3 and tickk<=3-passed):
-            tickk+=1
-            continue
-        draw_x = obs["x"] + lane_x  # Adjust x position with lane_x for drawing
-        if other_lane == 1:
-            if obs["lane"] != current_lane:  # Do not draw obstacle in current lane
-                screen.blit(obstacle_img, (draw_x, obs["y"]))
-        else:
-            if obs["lane"] != 5 - current_lane:  # Do not draw obstacle in current lane
-                screen.blit(obstacle_img, (draw_x, obs["y"]))
 
     pygame.display.flip()
     return True

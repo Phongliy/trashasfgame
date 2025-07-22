@@ -48,7 +48,22 @@ questions = {
     19: ("Sinh vật nào dưới đây KHÔNG thuộc nhóm động vật có xương sống?", ["Cá voi", "Hải sâm", "Cá ngựa", "Rắn biển"], "Hải sâm"),
     20: ("Nhiệt độ nào dưới đây là nhiệt độ đông đặc của nước?", ["0°C", "100°C", "-10°C", "4°C"], "0°C"),
     21: ("Nhiệt độ nào sau đây là nhiệt độ nóng chảy của nước đá?", ["0°C", "100°C", "-5°C", "10°C"], "0°C"),
-    22: ("Ai nắm giữ kỉ luật nín thở lâu nhất?", ["Ma da", "Fish", "Budimir", "cá voi mõm khoằm Cuvier"], "Budimir")
+    22: ("Ai nắm giữ kỉ luật nín thở lâu nhất?", ["Ma da", "Fish", "Budimir", "cá voi mõm khoằm Cuvier"], "Budimir"),
+    23: ("Đơn vị đo cường độ dòng điện là gì?", ["Ohm", "Ampe", "Volt", "Oát"], "Ampe"),
+    24: ("Quốc gia nào có diện tích lớn nhất thế giới?", ["Trung Quốc", "Nga", "Canada", "Mỹ"], "Nga"),
+    25: ("Thuyết tương đối được phát minh bởi ai?", ["Newton", "Einstein", "Galileo", "Hawking"], "Einstein"),
+    26: ("Số Pi xấp xỉ bằng bao nhiêu?", ["3.12", "3.14", "3.16", "3.18"], "3.14"),
+    27: ("Trong bảng tuần hoàn, nguyên tố Fe là nguyên tố gì?", ["Đồng", "Bạc", "Sắt", "Nhôm"], "Sắt"),
+    28: ("Quốc gia nào phát minh ra giấy?", ["Nhật Bản", "Ấn Độ", "Ai Cập", "Trung Quốc"], "Trung Quốc"),
+    29: ("Hợp chất H2O còn được biết đến với tên gọi gì?", ["Axit", "Rượu", "Nước", "Oxi"], "Nước"),
+    30: ("Thủ đô của Thái Lan là?", ["Hà Nội", "Bangkok", "Kuala Lumpur", "Jakarta"], "Bangkok"),
+    31: ("Mặt trời thuộc loại thiên thể nào?", ["Sao", "Hành tinh", "Mặt trăng", "Tiểu hành tinh"], "Sao"),
+    32: ("Tam giác đều có bao nhiêu góc bằng nhau?", ["1", "2", "3", "0"], "3"),
+    33: ("Tổng 3 góc trong một tam giác bằng bao nhiêu độ?", ["90°", "180°", "360°", "270°"], "180°"),
+    34: ("Lục địa nào nhỏ nhất thế giới?", ["Châu Âu", "Châu Phi", "Châu Úc", "Nam Mỹ"], "Châu Úc"),
+    35: ("Nguyên tố phổ biến nhất trong vũ trụ là gì?", ["Oxy", "Nitơ", "Hiđrô", "Cacbon"], "Hiđrô"),
+    36: ("Dãy núi dài nhất thế giới là?", ["Alps", "Himalaya", "Andes", "Rocky"], "Andes"),
+    37: ("Số Fibonacci thứ 7 là bao nhiêu?", ["8", "13", "21", "34"], "13")
 }
 
 # Global variables for question state
@@ -99,7 +114,10 @@ def main():
 
         # Draw question
         if current_question < len(questions):
-
+            question_index = current_question + 1
+            total_questions = len(questions)
+            number_text = font.render(f"Question {question_index}/{total_questions}", True, BLACK)
+            screen.blit(number_text, (WIDTH // 2 - number_text.get_width() // 2, 50))
 
             q_key = question_keys[current_question]
             question_text = questions[q_key][0]
