@@ -156,6 +156,7 @@ def setup():
     chicken_y = HEIGHT // 2
     passed = 0
     lane_x = 0
+    check=0
     current_lane = 0  # Start on sidewalk
     target_x = 0
     targetlane_x = 0  # Reset target lane position
