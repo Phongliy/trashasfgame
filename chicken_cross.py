@@ -3,6 +3,7 @@ import platform
 import pygame
 import random
 import question  # Assuming question.py is in the same directory
+import requests
 
 # Initialize Pygame
 pygame.init()
@@ -15,7 +16,7 @@ LANE_COUNT = 6
 LANE_WIDTH = WIDTH // (LANE_COUNT)  # Adjusted for sidewalk + 5 lanes
 TIME_LIMIT = 60  # 1 minute in seconds
 other_lane = 1
-all_Lane=34
+all_Lane = 34
 voice_files = ["una.mp3", "yaha.mp3"]  # Add more voice files as needed
 
 # Colors
@@ -39,6 +40,12 @@ down = pygame.image.load("down.png").convert()
 down = pygame.transform.scale(down, (LANE_WIDTH, HEIGHT))  # Match total street width
 usagi = pygame.image.load("maincharacter.png").convert_alpha()  # Use convert_alpha for transparency
 usagi = pygame.transform.scale(usagi, (200, 180))
+hit_chicken_img = pygame.image.load("download.png").convert_alpha()  # Replace with hit chicken image
+hit_chicken_img = pygame.transform.scale(hit_chicken_img, (200, 180))
+full_screen_img = pygame.image.load("dead.png").convert_alpha()  # Replace with full screen image
+full_screen_img = pygame.transform.scale(full_screen_img, (WIDTH, HEIGHT))
+center_img = pygame.image.load("wasted.png").convert_alpha()  # Replace with center image
+center_img = pygame.transform.scale(center_img, (300,150))  # Adjust size as needed
 star = pygame.image.load("star.png").convert_alpha()  # Use convert_alpha for transparency
 star = pygame.transform.scale(star, (200, 180))
 # Randomize obstacle image from 3 options (placeholders)
@@ -87,6 +94,10 @@ time_left = TIME_LIMIT
 game_over = False
 paused = False
 multiplier = 1.1  # Initial multiplier for score calculation
+hit = False  # Flag for when chicken is hit
+hit_timer = 0  # Timer for hit effect
+hit_delay_timer = 0  # Timer for delay before hit
+bet_amount = 0  # Initial bet amount from login/menu (to be set by menu.py)
 
 # Obstacles
 obstacles = [
@@ -106,76 +117,87 @@ multipliers = [
 q_asked = []
 question_gen = question.question_generator()
 
+# API Function
+def update_coins(team_username, changes, reason):
+    headers = {"Authorization": f"Bearer {token}"}  # Assuming token is set by menu.py
+    response = requests.post(f"http://localhost:5000/team/update-coins?teamUsername={team_username}&changes={changes}&reason={reason}", headers=headers)
+    return response.status_code == 201
+
 def play_random_voices():
-    if voice_files:  # Ensure there are voice files
-        selected_voices = random.sample(voice_files, min(1, len(voice_files)))  # Pick 2 random voices
+    if voice_files:
+        selected_voices = random.sample(voice_files, min(1, len(voice_files)))
         for voice in selected_voices:
             sound = pygame.mixer.Sound(voice)
             sound.play()
 
+def play_hit_sound():
+    hit_sound = pygame.mixer.Sound("crash.mp3")  # Replace with hit sound file
+    hit_sound.play()
+
+def play_center_sound():
+    center_sound = pygame.mixer.Sound("wasted.mp3")  # Replace with center sound file
+    center_sound.play()
+
 def generate_question():
-    # a = random.randint(1, 1)
-    # b = random.randint(1, 1)
-    # return f"{a} + {b} = ?", a + b
-
     q_key, is_correct = question.main()
-    # while q_key in q_asked:
-    #      q_key, is_correct = question.main()
     q_asked.append(q_key)
-    # # Check if the answer is correct
     return q_key, is_correct
-    # try:
-    #     key, answer = next(question_gen)
-    #     q_asked.append(key)
-    #     return key, answer
-    # except StopIteration:
-    #     print("No more questions!")
-    #     return None, None, None, None
 
-    
-    
+def load_score():
+    global score
+    try:
+        with open("score.txt", "r") as file:
+            content = file.read().strip()
+            score = float(content) if content else 0.0
+    except FileNotFoundError:
+        score = 0.0
+    except ValueError:
+        score = 0.0  # Handle invalid float conversion (e.g., empty or non-numeric content)
+
+def save_score():
+    with open("score.txt", "w") as file:
+        file.write(str(score))
 
 def setup():
-    global chicken_x, chicken_y, current_lane, car_x, car_y, math_question, math_answer, user_input, score, time_left, game_over, target_x, passed, lane_x, targetlane_x, check, paused, obstacles, items, multipliers, multiplier
+    global chicken_x, chicken_y, current_lane, car_x, car_y, math_question, math_answer, user_input, score, time_left, game_over, target_x, passed, lane_x, targetlane_x, check, paused, obstacles, items, multipliers, multiplier, hit, hit_timer, hit_delay_timer
     chicken_x = LANE_WIDTH // 2
     chicken_y = HEIGHT // 2
     passed = 0
     lane_x = 0
     current_lane = 0  # Start on sidewalk
-    target_x=0
+    target_x = 0
     targetlane_x = 0  # Reset target lane position
-    # Reset car position
     car_x = WIDTH
     car_y = HEIGHT - 150
-    # math_question, math_answer = generate_question()
     user_input = ""
-    score = 0
+    load_score()  # Load score from file
+    bet_amount=score
     time_left = TIME_LIMIT
     game_over = False
     paused = False
     target_x = chicken_x  # Reset target position
     multiplier = 1.1  # Reset multiplier
-    # Randomize obstacle positions and speeds
+    hit = False
+    hit_timer = 0
+    hit_delay_timer = 0
     for obs in obstacles:
-        obs["x"] = obs["lane"] * LANE_WIDTH + LANE_WIDTH // 2 - 100  # Center in lane
+        obs["x"] = obs["lane"] * LANE_WIDTH + LANE_WIDTH // 2 - 100
         obs["y"] = HEIGHT - 150
-        obs["speed_y"] = random.uniform(2, 6)  # Positive speed for upward movement
-        obs["image_idx"] = random.randint(0, 2)  # Randomize image index
-    # Initialize item positions and reset
+        obs["speed_y"] = random.uniform(2, 6)
+        obs["image_idx"] = random.randint(0, 2)
     for item in items:
-        item["x"] = item["lane"] * LANE_WIDTH + LANE_WIDTH // 2 - 70  # Center in lane
-        item["y"] = HEIGHT // 2  # Fixed y position
-        item["speed_y"] = 0  # No vertical movement
-    # Initialize multiplier positions and values (fixed per lane)
+        item["x"] = item["lane"] * LANE_WIDTH + LANE_WIDTH // 2 - 70
+        item["y"] = HEIGHT // 2
+        item["speed_y"] = 0
     for m in multipliers:
-        m["x"] = m["lane"] * LANE_WIDTH + LANE_WIDTH // 2 - 70  # Center in lane
-        m["y"] = HEIGHT // 2  # Fixed y position
-        m["speed_y"] = 0  # No vertical movement
+        m["x"] = m["lane"] * LANE_WIDTH + LANE_WIDTH // 2 - 70
+        m["y"] = HEIGHT // 2
+        m["speed_y"] = 0
 
 def update_loop():
-    global chicken_x, chicken_y, current_lane, car_x, car_y, math_question, math_answer, user_input, score, time_left, game_over, other_lane, target_x, passed, lane_x, targetlane_x, check, tickk, paused, obstacles, items, multipliers, multiplier
+    global chicken_x, chicken_y, current_lane, car_x, car_y, math_question, math_answer, user_input, score, time_left, game_over, other_lane, target_x, passed, lane_x, targetlane_x, check, tickk, paused, obstacles, items, multipliers, multiplier, hit, hit_timer, hit_delay_timer
 
-    if game_over or paused:
+    if game_over or paused or hit:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return False
@@ -183,32 +205,59 @@ def update_loop():
                 mouse_pos = pygame.mouse.get_pos()
                 if WIDTH // 10 > mouse_pos[0] > 0 and HEIGHT // 20 > mouse_pos[1] > 0 and paused:  # Resume button
                     paused = False
-                elif WIDTH//2-WIDTH//20 < mouse_pos[0] < WIDTH//2+WIDTH//20 and HEIGHT // 2+100 < mouse_pos[1] < HEIGHT // 2+100+HEIGHT//15 and (paused or game_over):  # Play Again button
+                elif WIDTH // 2 - WIDTH // 20 < mouse_pos[0] < WIDTH // 2 + WIDTH // 20 and HEIGHT // 2 + 100 < mouse_pos[1] < HEIGHT // 2 + 100 + HEIGHT // 15 and (paused or game_over or hit):  # Play Again button
                     setup()
         if paused:
             congrats_text = congrats_font.render(f"Chúc mừng bạn đã dừng lại với số điểm {score:.1f}", True, BLACK)
-            congrats_box_width = congrats_text.get_width() + 40  # Reduced padding from 60 to 40
-            congrats_box_height = congrats_text.get_height() + 20  # Reduced padding from 40 to 20
+            congrats_box_width = congrats_text.get_width() + 40
+            congrats_box_height = congrats_text.get_height() + 20
             congrats_box_x = (WIDTH // 2 - congrats_box_width // 2)
             congrats_box_y = HEIGHT // 2 - congrats_box_height // 2
             congrats_box_rect = pygame.Rect(congrats_box_x, congrats_box_y, congrats_box_width, congrats_box_height)
-            pygame.draw.rect(screen, (255, 255, 255), congrats_box_rect)  # White background
-            pygame.draw.rect(screen, BLACK, congrats_box_rect, 2)        # Black border
-            screen.blit(congrats_text, (WIDTH // 2 - congrats_text.get_width() // 2, congrats_box_y + 10))  # Adjusted y offset
+            pygame.draw.rect(screen, (255, 255, 255), congrats_box_rect)
+            pygame.draw.rect(screen, BLACK, congrats_box_rect, 2)
+            screen.blit(congrats_text, (WIDTH // 2 - congrats_text.get_width() // 2, congrats_box_y + 10))
+            # Draw Play Again button when paused
+            play_again_button_rect = pygame.Rect(WIDTH // 2 - WIDTH // 20, HEIGHT // 2 + 100, WIDTH // 10, HEIGHT // 15)
+            pygame.draw.rect(screen, WHITE, play_again_button_rect)
+            pygame.draw.rect(screen, BLACK, play_again_button_rect, 2)
+            play_again_text = stop_font.render("Play Again", True, BLACK)
+            screen.blit(play_again_text, (WIDTH // 2 - WIDTH // 20 + 25, HEIGHT // 2 + 115))
+            # Update coins when paused
+            if update_coins("teamUsername", score - bet_amount, "Game paused"):
+                print(f"Coins updated: {score - bet_amount}")
             pygame.display.flip()
             return True
         if game_over:
-            game_over_text = congrats_font.render("Mất hết rồi :(((", True, BLACK)
-            game_over_box_width = game_over_text.get_width() + 40  # Reduced padding from 60 to 40
-            game_over_box_height = game_over_text.get_height() + 20  # Reduced padding from 40 to 20
-            game_over_box_x = (WIDTH // 2 - game_over_box_width // 2)
-            game_over_box_y = HEIGHT // 2 - game_over_box_height // 2
-            game_over_box_rect = pygame.Rect(game_over_box_x, game_over_box_y, game_over_box_width, game_over_box_height)
-            pygame.draw.rect(screen, (255, 255, 255), game_over_box_rect)  # White background
-            pygame.draw.rect(screen, BLACK, game_over_box_rect, 2)        # Black border
-            screen.blit(game_over_text, (WIDTH // 2 - game_over_text.get_width() // 2, game_over_box_y + 10))  # Adjusted y offset
+            congrats_text = congrats_font.render(f"Chúc mừng bạn đã dừng lại với số điểm {score:.1f}", True, BLACK)
+            congrats_box_width = congrats_text.get_width() + 40
+            congrats_box_height = congrats_text.get_height() + 20
+            congrats_box_x = (WIDTH // 2 - congrats_box_width // 2)
+            congrats_box_y = HEIGHT // 2 - congrats_box_height // 2
+            congrats_box_rect = pygame.Rect(congrats_box_x, congrats_box_y, congrats_box_width, congrats_box_height)
+            pygame.draw.rect(screen, (255, 255, 255), congrats_box_rect)
+            pygame.draw.rect(screen, BLACK, congrats_box_rect, 2)
+            screen.blit(congrats_text, (WIDTH // 2 - congrats_text.get_width() // 2, congrats_box_y + 10))
+            # Draw Play Again button when paused
+            play_again_button_rect = pygame.Rect(WIDTH // 2 - WIDTH // 20, HEIGHT // 2 + 100, WIDTH // 10, HEIGHT // 15)
+            pygame.draw.rect(screen, WHITE, play_again_button_rect)
+            pygame.draw.rect(screen, BLACK, play_again_button_rect, 2)
+            play_again_text = stop_font.render("Play Again", True, BLACK)
+            screen.blit(play_again_text, (WIDTH // 2 - WIDTH // 20 + 25, HEIGHT // 2 + 115))
+            # Update coins when game over
+            if update_coins("teamUsername", score - bet_amount, "Game over"):
+                print(f"Coins updated: {score - bet_amount}")
             pygame.display.flip()
             return True
+        if hit:
+            if check == 0:
+                play_hit_sound()
+                play_center_sound()
+                check = 1
+            # Update coins when hit (set score to 0 and deduct all)
+            if update_coins("teamUsername", -score, "Chicken hit"):
+                print(f"Coins deducted: {-score}")
+                score = 0  # Reset score to 0 after deduction
 
     # Event handling
     for event in pygame.event.get():
@@ -223,32 +272,40 @@ def update_loop():
                         target_x -= (LANE_WIDTH)
                         check = 1
                     else:
-                        target_x += (LANE_WIDTH-20)
-                    play_random_voices()  # Play random voices after correct answer
+                        target_x += (LANE_WIDTH - 20)
+                    play_random_voices()
                     current_lane += 1
-                    score += 10 * multiplier  # Apply multiplier to score
+                    score *= multiplier  # Base score increment
                     passed += 1
                     if passed >= 3:
                         targetlane_x -= LANE_WIDTH
-                    # Update multiplier based on current lane
-                    multiplier = round(1.1 ** (current_lane), 2)  # Update multiplier dynamically
-                    # math_question, math_answer = generate_question()
-                    # user_input = ""
-                    
-                    # Reset obstacles when passing a lane
+                    # Update multiplier based on current lane's multiplier value
+                    for m in multipliers:
+                        if m["lane"] == current_lane + 1:  # +1 because lane starts from 1
+                            multiplier = m["value"]
                     for obs in obstacles:
                         if other_lane == 1:
-                            if obs["lane"] == passed - 1:  # Reset obstacle for the lane just passed
+                            if obs["lane"] == passed - 1:
                                 obs["y"] = HEIGHT - 150
                                 obs["speed_y"] = random.uniform(2, 6)
                                 obs["image_idx"] = random.randint(0, 2)
                         else:
-                            if obs["lane"] == 5 - passed + 1:  # Reset obstacle for the lane just passed
+                            if obs["lane"] == 5 - passed + 1:
                                 obs["y"] = HEIGHT - 150
                                 obs["speed_y"] = random.uniform(2, 6)
                                 obs["image_idx"] = random.randint(0, 2)
                 else:
-                    game_over = True
+                    current_lane += 1
+                    if passed >= 2:
+                        target_x -= (LANE_WIDTH)
+                        check = 1
+                    else:
+                        target_x += (LANE_WIDTH - 20)
+                    if passed >= 3:
+                        targetlane_x -= LANE_WIDTH
+                    score = 0
+                    save_score()
+                    hit_delay_timer = 1  # Start 1-second delay
             elif event.key in (pygame.K_0, pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4, pygame.K_5, pygame.K_6, pygame.K_7, pygame.K_8, pygame.K_9):
                 user_input += event.unicode
             elif event.key == pygame.K_BACKSPACE:
@@ -257,6 +314,15 @@ def update_loop():
             mouse_pos = pygame.mouse.get_pos()
             if WIDTH // 10 > mouse_pos[0] > 0 and HEIGHT // 20 > mouse_pos[1] > 0:  # Stop button area
                 paused = True
+
+    # Handle hit delay
+    if hit_delay_timer > 0 and hit_delay_timer <= 30:  # Wait for 1 second (60 frames)
+        hit_delay_timer += 1
+        print(hit_delay_timer)
+    elif hit_delay_timer > 30:  # After 1 second, trigger hit
+        hit = True
+        print(hit)
+        hit_delay_timer = 0
 
     if abs(chicken_x - target_x) > move_speed:
         chicken_x += move_speed if chicken_x < target_x else -move_speed
@@ -275,40 +341,40 @@ def update_loop():
 
     # Move obstacles upward
     for obs in obstacles:
-        obs["y"] -= obs["speed_y"]  # Move upward (negative y direction)
-        if obs["y"] < -500:  # When obstacle moves off the top
-            obs["y"] = HEIGHT  # Reset to initial position (bottom)
-            obs["speed_y"] = random.uniform(2, 6)  # Randomize positive speed again
+        obs["y"] -= obs["speed_y"]
+        if obs["y"] < -500:
+            obs["y"] = HEIGHT
+            obs["speed_y"] = random.uniform(2, 6)
             obs["image_idx"] = random.randint(0, 2)
 
     # Cycle obstacle from lane 1 to lane 5 with repositioning behind map
-    tickk=0
-    for obs in obstacles[:]:  # Use a copy to modify list during iteration
-        if(passed>=3 and tickk<=passed-3):
-            tickk+=1
+    tickk = 0
+    for obs in obstacles[:]:
+        if passed >= 3 and tickk <= passed - 3:
+            tickk += 1
             continue
-        if obs["lane"] == 1 and (obs["x"] + lane_x < -100):  # Check if out of screen left
-            obs["lane"] = 5  # Move to lane 5
-            obs["x"] = 4 * LANE_WIDTH + LANE_WIDTH // 2 - 50 + WIDTH * 5  # Reposition behind map (far right)
-            obs["y"] = HEIGHT   # Reset y position
-            obs["speed_y"] = random.uniform(2, 6)  # Randomize speed
+        if obs["lane"] == 1 and (obs["x"] + lane_x < -100):
+            obs["lane"] = 5
+            obs["x"] = 4 * LANE_WIDTH + LANE_WIDTH // 2 - 50 + WIDTH * 5
+            obs["y"] = HEIGHT
+            obs["speed_y"] = random.uniform(2, 6)
             obs["image_idx"] = random.randint(0, 2)
 
     # Move items (similar to obstacles, fixed y)
     for item in items[:]:
-        if item["lane"] == 1 and (item["x"] + lane_x < -100):  # Check if out of screen left
-            item["lane"] = 5  # Move to lane 5
-            item["x"] = 4 * LANE_WIDTH + LANE_WIDTH // 2 - 70 + WIDTH * 5  # Reposition behind map (far right)
-            item["y"] = HEIGHT // 2  # Fixed y position
-            item["x"] += move_speed if lane_x < targetlane_x else -move_speed  # Move with lane
+        if item["lane"] == 1 and (item["x"] + lane_x < -100):
+            item["lane"] = 5
+            item["x"] = 4 * LANE_WIDTH + LANE_WIDTH // 2 - 70 + WIDTH * 5
+            item["y"] = HEIGHT // 2
+            item["x"] += move_speed if lane_x < targetlane_x else -move_speed
 
     # Move multipliers (similar to items)
     for m in multipliers[:]:
-        if m["lane"] == 1 and (m["x"] + lane_x < -100):  # Check if out of screen left
-            m["lane"] = 5  # Move to lane 5
-            m["x"] = 4 * LANE_WIDTH + LANE_WIDTH // 2 - 70 + WIDTH * 5  # Reposition behind map (far right)
-            m["y"] = HEIGHT // 2  # Fixed y position
-            m["x"] += move_speed if lane_x < targetlane_x else -move_speed  # Move with lane
+        if m["lane"] == 1 and (m["x"] + lane_x < -100):
+            m["lane"] = 5
+            m["x"] = 4 * LANE_WIDTH + LANE_WIDTH // 2 - 70 + WIDTH * 5
+            m["y"] = HEIGHT // 2
+            m["x"] += move_speed if lane_x < targetlane_x else -move_speed
 
     if abs(lane_x - targetlane_x) > move_speed:
         lane_x += move_speed if lane_x < targetlane_x else -move_speed
@@ -319,75 +385,85 @@ def update_loop():
 
     # Draw items
     for item in items:
-        draw_x = item["x"] + lane_x  # Adjust x position with lane_x for drawing
+        draw_x = item["x"] + lane_x
         screen.blit(item_img, (draw_x, item["y"]))
 
     # Draw multipliers
     for m in multipliers:
-        draw_x = m["x"] + lane_x  # Adjust x position with lane_x for drawing
+        draw_x = m["x"] + lane_x
         multiplier_text = font.render(f"x{round(m['value'], 2)}", True, BLACK)
         text_rect = multiplier_text.get_rect(center=(draw_x + 50, m["y"] + 50))
         screen.blit(multiplier_text, text_rect)
 
     # Draw obstacles
     for obs in obstacles:
-        if(passed>=3 and tickk<=3-passed):
-            tickk+=1
+        if passed >= 3 and tickk <= 3 - passed:
+            tickk += 1
             continue
-        draw_x = obs["x"] + lane_x  # Adjust x position with lane_x for drawing
+        draw_x = obs["x"] + lane_x
         if other_lane == 1:
-            if obs["lane"] != current_lane:  # Do not draw obstacle in current lane
+            if obs["lane"] != current_lane:
                 screen.blit(obstacle_images[obs["image_idx"]], (draw_x, obs["y"]))
         else:
-            if obs["lane"] != 5 - current_lane:  # Do not draw obstacle in current lane
+            if obs["lane"] != 5 - current_lane:
                 screen.blit(obstacle_images[obs["image_idx"]], (draw_x, obs["y"]))
 
-    # Draw lanes
-    screen.blit(usagi, (chicken_x - 75, chicken_y - 90))  # Chicken (adjusted for center)
+    # Draw chicken (switch to hit_chicken_img when hit)
+    if hit:
+        screen.blit(hit_chicken_img, (chicken_x - 75, chicken_y - 90))
+        screen.blit(full_screen_img, (0, 0))  # Add full screen image after hit
+        screen.blit(center_img, (WIDTH // 2 - center_img.get_width() // 2, HEIGHT // 2 - center_img.get_height() // 2))  # Center the center image
+         # Draw Play Again button when paused
+        play_again_button_rect = pygame.Rect(WIDTH // 2 - WIDTH // 20, HEIGHT // 2 + 100, WIDTH // 10, HEIGHT // 15)
+        pygame.draw.rect(screen, WHITE, play_again_button_rect)
+        pygame.draw.rect(screen, BLACK, play_again_button_rect, 2)
+        play_again_text = stop_font.render("Play Again", True, BLACK)
+        screen.blit(play_again_text, (WIDTH // 2 - WIDTH // 20 + 25, HEIGHT // 2 + 115))
+        pygame.display.flip()
+    else:
+        screen.blit(usagi, (chicken_x - 75, chicken_y - 90))
+
+    # Draw UI elements
     question_text = font.render(math_question, True, WHITE)
     input_text = font.render(user_input, True, WHITE)
     time_text = font.render(f"Time: {int(time_left)}s", True, WHITE)
-    score_text = font.render(f"Score: {score:.1f}", True, WHITE)  # Display score with 1 decimal place
+    score_text = font.render(f"Score: {score:.1f}", True, WHITE)
 
     # Time box
     time_render = font.render(f"Time: {int(time_left)}s", True, BLACK)
-    time_box_width = time_render.get_width() + 40  # Reduced padding from 60 to 40
-    time_box_height = time_render.get_height() + 20  # Reduced padding from 40 to 20
-    time_box_x = (WIDTH - time_box_width - 20)  # Position near top-right
+    time_box_width = time_render.get_width() + 40
+    time_box_height = time_render.get_height() + 20
+    time_box_x = (WIDTH - time_box_width - 20)
     time_box_y = 10
     time_box_rect = pygame.Rect(time_box_x, time_box_y, time_box_width, time_box_height)
-    pygame.draw.rect(screen, (255, 255, 255), time_box_rect)  # White background
-    pygame.draw.rect(screen, BLACK, time_box_rect, 2)        # Black border
-    screen.blit(time_render, (time_box_x + 20, time_box_y + 10))  # Adjusted offset
+    pygame.draw.rect(screen, (255, 255, 255), time_box_rect)
+    pygame.draw.rect(screen, BLACK, time_box_rect, 2)
+    screen.blit(time_render, (time_box_x + 20, time_box_y + 10))
 
     # Score box
     score_render = font.render(f"Score: {score:.1f}", True, BLACK)
-    score_box_width = score_render.get_width() + 40  # Reduced padding from 60 to 40
-    score_box_height = score_render.get_height() + 20  # Reduced padding from 40 to 20
-    score_box_x = (WIDTH - score_box_width - 20)  # Position near top-right, below time
-    score_box_y = 40  # Adjusted to avoid overlap
-    score_box_rect = pygame.Rect(score_box_x, score_box_y+50 ,score_box_width, score_box_height)
-    pygame.draw.rect(screen, (255, 255, 255), score_box_rect)  # White background
-    pygame.draw.rect(screen, BLACK, score_box_rect, 2)        # Black border
-    screen.blit(score_render, (score_box_x + 20, score_box_y + 10+50))  # Adjusted offset
+    score_box_width = score_render.get_width() + 40
+    score_box_height = score_render.get_height() + 20
+    score_box_x = (WIDTH - score_box_width - 20)
+    score_box_y = 40
+    score_box_rect = pygame.Rect(score_box_x, score_box_y + 50, score_box_width, score_box_height)
+    pygame.draw.rect(screen, (255, 255, 255), score_box_rect)
+    pygame.draw.rect(screen, BLACK, score_box_rect, 2)
+    screen.blit(score_render, (score_box_x + 20, score_box_y + 10 + 50))
 
     # Draw input text
     screen.blit(input_text, (10, 50))
 
     # Draw stop button
     stop_button_rect = pygame.Rect(0, 0, WIDTH // 10, HEIGHT // 20)
-    pygame.draw.rect(screen, WHITE, stop_button_rect)  # White button
-    pygame.draw.rect(screen, BLACK, stop_button_rect, 2)  # Black border
+    pygame.draw.rect(screen, WHITE, stop_button_rect)
+    pygame.draw.rect(screen, BLACK, stop_button_rect, 2)
     stop_text = stop_font.render("Point Out", True, BLACK)
     screen.blit(stop_text, (WIDTH // 20 - stop_text.get_width() // 2, HEIGHT // 40 - stop_text.get_height() // 2))
 
-    # Draw play again button (only when paused or game_over)
-    if paused or game_over:
-        play_again_button_rect = pygame.Rect(WIDTH//2-WIDTH//20, HEIGHT // 2+100, WIDTH // 10, HEIGHT // 15)
-        pygame.draw.rect(screen, WHITE, play_again_button_rect)  # White button
-        pygame.draw.rect(screen, BLACK, play_again_button_rect, 2)  # Black border
-        play_again_text = stop_font.render("Play Again", True, BLACK)
-        screen.blit(play_again_text, (WIDTH//2-WIDTH//20+25, HEIGHT // 2+115))
+    # Save score when game ends or is paused
+    if game_over or paused:
+        save_score()
 
     pygame.display.flip()
     return True
