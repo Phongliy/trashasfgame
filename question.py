@@ -26,29 +26,26 @@ tick_font = pygame.font.Font("DejaVuSans.ttf", 40)
 
 # Question and answer setup
 questions = {
-    0: ("Cây nào sống ở vùng ngập mặn?", ["CÂY CẶC BẦN(bần chua)", "Cây Xoài", "Cây Dừa", "Cây mít"], "CÂY CẶC BẦN(bần chua)"),
-    1: ("Con gì đi bằng 3 chân?", ["Con Mẹm", "Chó cụt chân", "Gà công nghiệp", "Cụ già với gậy"], "Cụ già với gậy"),
-    2: ("Thức ăn nào làm bạn khóc?", ["Không có gì ăn", "ớt", "Khoai tây", "Cơm khổ khoa"], "Không có gì ăn"),
-    3: ("Cha của bé sol là ai", ["Trình Trần Phường Tuần", "Hiếu thứ hai", "j69", "Trịnh Trần Phương Tuấn"], "Trịnh Trần Phương Tuấn"),
-    4: ("Tại sao con gà lai qua đường?", ["Vì nó thích", "Để qua phía bên kia", "Ước mở thuở nhỏ", "Để mưu sinh"], "Để qua phía bên kia"),
-    5: ("LGBT là viết tắt của gì?", ["Lesbian Gay Bisexual Transgender", "Lấy Gió Bằng Turbo", "Lẩu Gà Bình Thuận", "Lắm Gái Bán Tình"], "Lesbian Gay Bisexual Transgender"),
-    6: ("Game nào hay nhất Roblox?", ["Blox fruit", "Grow a garden", "Liên Blox Mobile", "Free fire"], "Blox fruit"),
-    7: ("Trong Liên Quân vị tướng nào thấp nhất?", ["Aya", "Zip", "Nakroth", "Florentino"], "Zip"),
-    8: ("Cái gì người nghèo có mà người giàu không có?", ["Tiền", "Hạnh Phúc", "Không Có Gì", "Gia Đình"], "Không Có Gì"),
-    9: ("Sắp xếp các từ sau theo đúng thứ tự c/l/ọ/n/ồ", ["lộn cò", "cộn lò", "cọn lồ", "lọ cồn"], "lọ cồn"),
-    10: ("74 giây là bao nhiêu phút", ["gần 1 phút 30s", "1.2756666p", "1.23333p", "2p"], "1.23333p"),
-    11: ("Biển số nào sau đây là biển của TPHCM", ["55", "1234", "69", "555"], "55"),
-    12: ("Số nguyên tố lớn nhất sau 1000 là?", ["987", "993", "997", "999"], "997"),
-    13: ("Ai là người liêm nhất trong số những người sau đây", ["Hiếu Thứ Hai", "Sơn Tùng MTP", "J97", "MCK"], "J97"),
-    14: ("Ai là người đầu tiên đặt chân lên mặt trăng", ["Chú Cuội", "Chị Hằng", "Neil Armstrong", "Lowg"], "Neil Armstrong"),
-    15: ("Số nào khiến học sinh sợ nhất?", ["1", "5", "10", "0"], "0"),
-    16: ("Loại Tiền nào có giá trị thấp nhất", ["Dollar", "Euro", "Tiền Án", "Tiền Sự"], "Tiền Án"),
-    17: ("Trong những loại người dưới đây ai chạy nhanh nhất?", ["Người chết", "Người khuyết tật", "Người gay", "Người âm"], "Người gay"),
-    18: ("Loài nào dưới đây không phải là bò sát?", ["Cá sấu", "Rùa", "Thằn lằn", "Ếch"], "Ếch"),
-    19: ("Sinh vật nào dưới đây KHÔNG thuộc nhóm động vật có xương sống?", ["Cá voi", "Hải sâm", "Cá ngựa", "Rắn biển"], "Hải sâm"),
-    20: ("Nhiệt độ nào dưới đây là nhiệt độ đông đặc của nước?", ["0°C", "100°C", "-10°C", "4°C"], "0°C"),
-    21: ("Nhiệt độ nào sau đây là nhiệt độ nóng chảy của nước đá?", ["0°C", "100°C", "-5°C", "10°C"], "0°C"),
-    22: ("Ai nắm giữ kỉ luật nín thở lâu nhất?", ["Ma da", "Fish", "Budimir", "cá voi mõm khoằm Cuvier"], "Budimir")
+    0: ("Mật khẩu nào sau đây được xem là an toàn nhất?", ["123456", "password", "Anhyeuem123", "Jk#3vL9!xZ"], "Jk#3vL9!xZ"),
+1: ("Khi nhận được email từ người lạ kèm liên kết đáng ngờ, bạn nên làm gì?", ["Bấm vào thử xem là gì", "Tải tệp đính kèm", "Báo cáo là spam và xóa ngay", "Trả lời lại để hỏi thông tin"], "Báo cáo là spam và xóa ngay"),
+2: ("Mã độc (malware) là gì?", ["Phần mềm giúp máy tính chạy nhanh hơn", "Phần mềm độc hại gây hại cho máy tính", "Hệ điều hành miễn phí", "Phần mềm diệt virus"], "Phần mềm độc hại gây hại cho máy tính"),
+3: ("Tường lửa (firewall) có tác dụng gì?", ["Làm đẹp giao diện máy tính", "Ngăn chặn truy cập trái phép vào hệ thống", "Tăng tốc mạng Internet", "Xóa phần mềm độc hại"], "Ngăn chặn truy cập trái phép vào hệ thống"),
+4: ("Ransomware là gì?", ["Phần mềm diệt virus", "Loại mã độc tống tiền", "Hệ điều hành mã nguồn mở", "Phần mềm kiểm tra RAM"], "Loại mã độc tống tiền"),
+5: ("Bộ phận nào của máy tính dùng để lưu dữ liệu tạm thời khi máy đang chạy?", ["Ổ cứng (HDD)", "ROM", "RAM", "GPU"], "RAM"),
+6: ("CPU còn được gọi là gì?", ["Bộ nhớ ngoài", "Bộ xử lý trung tâm", "Màn hình hiển thị", "Ổ đĩa cứng"], "Bộ xử lý trung tâm"),
+7: ("Ổ cứng SSD nhanh hơn HDD vì lý do nào?", ["Có thể phát nhạc to hơn", "Không có bộ phận chuyển động cơ học", "Dung lượng lớn hơn", "Sử dụng hệ điều hành khác"], "Không có bộ phận chuyển động cơ học"),
+8: ("Thiết bị nào dùng để hiển thị thông tin?", ["Chuột", "Loa", "Màn hình", "CPU"], "Màn hình"),
+9: ("ROM có đặc điểm gì?", ["Ghi và xóa dữ liệu liên tục", "Lưu trữ tạm thời", "Lưu trữ lâu dài, không bị mất khi tắt máy", "Chỉ dùng trong game"], "Lưu trữ lâu dài, không bị mất khi tắt máy"),
+10: ("Trí tuệ nhân tạo (AI) là gì?", ["Một loại phần mềm chat", "Khả năng máy tính mô phỏng trí tuệ con người", "Một thiết bị phần cứng đặc biệt", "Một hệ điều hành mới"], "Khả năng máy tính mô phỏng trí tuệ con người"),
+11: ("Ứng dụng nào sau đây có sử dụng AI?", ["Máy tính cầm tay", "Đồng hồ báo thức", "Trợ lý ảo như Siri, Google Assistant", "Máy in"], "Trợ lý ảo như Siri, Google Assistant"),
+12: ("AI được ứng dụng trong lĩnh vực nào sau đây?", ["Chỉ trong game", "Chỉ trong toán học", "Rất nhiều lĩnh vực như y tế, giáo dục, công nghiệp", "Không ứng dụng được thực tế"], "Rất nhiều lĩnh vực như y tế, giáo dục, công nghiệp"),
+13: ("Một điểm cần chú ý khi sử dụng AI là gì?", ["AI luôn đúng", "AI không cần dữ liệu", "AI có thể tạo ra sai sót và thiên lệch nếu học từ dữ liệu không tốt", "AI tự động cập nhật hệ điều hành"], "AI có thể tạo ra sai sót và thiên lệch nếu học từ dữ liệu không tốt"),
+14: ("ChatGPT là ví dụ của ứng dụng AI nào?", ["Trí tuệ cảm xúc", "Học máy không giám sát", "Xử lý ngôn ngữ tự nhiên", "Thị giác máy tính"], "Xử lý ngôn ngữ tự nhiên"),
+15: ("AI cần gì để học và đưa ra quyết định?", ["RAM mạnh", "Dữ liệu huấn luyện", "Kết nối Wi-Fi", "Màn hình cảm ứng"], "Dữ liệu huấn luyện"),
+16: ("Học sâu (Deep Learning) là một phần của lĩnh vực nào?", ["Tin học văn phòng", "Mạng máy tính", "Học máy (Machine Learning)", "Cơ sở dữ liệu"], "Học máy (Machine Learning)"),
+17: ("Mạng nơ-ron nhân tạo hoạt động giống với cơ quan nào của con người?", ["Tim", "Phổi", "Não", "Dạ dày"], "Não"),
+18: ("Hành vi nào dưới đây có thể dẫn đến việc AI đưa ra kết quả sai?", ["Nhập dữ liệu chính xác", "Dữ liệu thiếu đa dạng và thiên lệch", "Tăng RAM máy tính", "Dùng phần mềm diệt virus"], "Dữ liệu thiếu đa dạng và thiên lệch"),
+19: ("Hệ thống AI có thể tự động học từ dữ liệu mới gọi là gì?", ["Hệ thống tĩnh", "Hệ thống mở rộng", "Hệ thống học máy", "Hệ thống mã hóa"], "Hệ thống học máy")
 }
 
 # Global variables for question state
@@ -99,7 +96,10 @@ def main():
 
         # Draw question
         if current_question < len(questions):
-
+            question_index = current_question + 1
+            total_questions = len(questions)
+            number_text = font.render(f"Question {question_index}/{total_questions}", True, BLACK)
+            screen.blit(number_text, (WIDTH // 2 - number_text.get_width() // 2, 50))
 
             q_key = question_keys[current_question]
             question_text = questions[q_key][0]
