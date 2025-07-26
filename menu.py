@@ -1,6 +1,4 @@
 import pygame
-import chicken_cross
-import asyncio
 
 # Initialize Pygame
 pygame.init()
@@ -46,8 +44,6 @@ while running:
                 play_button_y <= mouse_pos[1] <= play_button_y + button_height):
                 print("Game Started!")  # Placeholder for starting the game
                 running = False  # Exit to start game
-                asyncio.run(chicken_cross.main())
-
 
     background = pygame.image.load("road.png").convert()
     background = pygame.transform.scale(background, (WIDTH, HEIGHT))
@@ -56,8 +52,8 @@ while running:
     # Draw title
 
     # Draw Play button
-    pygame.draw.rect(screen,WHITE , (play_button_x, play_button_y-30, button_width, button_height))
-    play_text = font.render("Play", True, BLACK)
+    pygame.draw.rect(screen,BLACK , (play_button_x, play_button_y-30, button_width, button_height))
+    play_text = font.render("Play", True, WHITE)
     screen.blit(play_text, (play_button_x + button_width // 2 - play_text.get_width() // 2, play_button_y + button_height // 2 - play_text.get_height() // 2-30))
 
     # Draw Instructions button
